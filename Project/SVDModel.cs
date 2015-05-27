@@ -8,6 +8,7 @@ namespace Project
 {
     class SVDModel
     {
+        private Data data = null;
         private double miu = double.NaN;
 
         private Dictionary<string, double> Bi = null;
@@ -16,7 +17,9 @@ namespace Project
         private Dictionary<string, Vector> Pu = null;
         private Dictionary<string, Vector> Qi = null;
 
-
+        public SVDModel(Data data){
+            this.data = data;
+        }
         public double PredictRating(string sUID, string sIID)
         {
             if (Bi.ContainsKey(sIID) && Bu.ContainsKey(sUID))
@@ -73,7 +76,7 @@ namespace Project
         }
 
         public void trainBaseModel(int cFeatures){
-
+            throw new NotImplementedException();
         }
     }
 }
