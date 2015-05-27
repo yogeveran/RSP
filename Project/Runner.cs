@@ -12,10 +12,11 @@ namespace Project
         private Dictionary<string, Dictionary<string, int>> testset = new Dictionary<string, Dictionary<string, int>>();
         static void Main(string[] args)
         {
-            throw new NotImplementedException();
+            Runner runner = new Runner();
+            runner.Load("",0.95);
         }
 
-        public void Load() {
+        public void Load(string sFileName, double dTrainSetSize){
             throw new NotImplementedException();
         }
 
