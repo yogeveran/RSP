@@ -13,10 +13,10 @@ namespace Project
         static void Main(string[] args)
         {
             Runner runner = new Runner();
-            runner.Load("",0.95);
+            runner.Load("",0.95,0.1);
         }
 
-        public void Load(string sFileName, double dTrainSetSize){
+        public void Load(string sFileName, double dTrainSetSize,double sizeOfSmallestSVDModel){
             throw new NotImplementedException();
         }
 
