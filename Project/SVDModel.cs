@@ -16,9 +16,16 @@ namespace Project
 
         private Dictionary<string, Vector> Pu = null;
         private Dictionary<string, Vector> Qi = null;
+        private SVDModel model;
 
         public SVDModel(Data data){
             this.data = data;
+        }
+
+        public SVDModel(SVDModel model)
+        {
+            // TODO: Create Deep Copy Constructor.
+            throw new NotImplementedException();
         }
         public double PredictRating(string sUID, string sIID)
         {
