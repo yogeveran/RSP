@@ -85,5 +85,10 @@ namespace Project
         public void trainBaseModel(int cFeatures){
             throw new NotImplementedException();
         }
+
+        public double similiarity(SVDModel fullyTrainedSVD)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
