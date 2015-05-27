@@ -105,11 +105,5 @@ namespace Project
             return new Vector(res);
         }
 
-        public static Vector average(Vector vector1, Vector vector2)
-        {
-            if ((vector1 == null) || (vector2 == null) || (vector1.size() != vector2.size()))
-                return null;
-            return (vector1 + vector2) / 2.0;
-        }
     }
 }
