@@ -60,7 +60,8 @@ namespace Project
             }
             double dConfidence,ourRMSE,svdRMSE;
             runner.Compute_RMSE_and_Confidence(ourModel, fullyTrainedSVD, out dConfidence, out ourRMSE, out svdRMSE);
-            Console.WriteLine("Distance from quickSVD to SVD: ")
+
+            Console.WriteLine("Distance from quickSVD to SVD: " + ourModel.similiarity(fullyTrainedSVD));
 
             Console.WriteLine("Average seconds time for quick train is: " + quickTrainList.Average(x => x.Seconds));
             Console.WriteLine("Average seconds time for full train is: " + fullTrainList.Average(x => x.Seconds));

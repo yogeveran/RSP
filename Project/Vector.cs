@@ -105,5 +105,16 @@ namespace Project
             return new Vector(res);
         }
 
+        public static double dist(Vector a, Vector b)
+        {
+            if (a == null || b == null)
+                throw new ArgumentNullException();
+            if (a.size() != b.size())
+                throw new ArgumentException("Vectors must be the same length");
+            double result = 0;
+            for (int i = 0; i < a.size(); i++)
+                result += Math.Pow(a.getIndex(i) - b.getIndex(i), 2);
+            return Math.Sqrt(result);
+        }
     }
 }

@@ -86,9 +86,22 @@ namespace Project
             throw new NotImplementedException();
         }
 
-        public double similiarity(SVDModel fullyTrainedSVD)
+
+        public double similiarity(SVDModel other)
         {
-            throw new NotImplementedException();
+            if (other == null)
+                throw new ArgumentNullException();
+            double res = Math.Abs(miu-other.miu);
+
+            foreach(string str in Qi.Keys)
+                res += Vector.dist(Qi[str],other.Qi[str]);
+            foreach (string str in Qi.Keys)
+                res += Vector.dist(Pu[str], other.Pu[str]);
+            foreach (string str in Bi.Keys)
+                res += Math.Abs(Bi[str] - other.Bi[str]);
+            foreach (string str in Bi.Keys)
+                res += Math.Abs(Bu[str] - other.Bu[str]);
+            return res;
         }
     }
 }
