@@ -11,6 +11,7 @@ namespace Project
         public static int cFeatures = 10, LOOP = 10;
         public static string fileName = "";
         public static double trainSetSize = 0.95, SmallestDBSize = 0.1;
+        private int sizeOfTest = 0;
         
         List<SVDModel> list = new List<SVDModel>();
         private Dictionary<string, Dictionary<string, int>> testset = new Dictionary<string, Dictionary<string, int>>();
@@ -95,10 +96,11 @@ namespace Project
 
         public void Compute_RMSE_and_Confidence(SVDModel ourModel, SVDModel SVD, out double dConfidence, out double ourRMSE, out double svdRMSE)
         {
-            double predictedRankSVD, error, squared;
-            double userRMSESVD=0, moneSVD=0;
+            double predictedRankSVD, error, squared,OURpredictedRankSVD,OURerror,OURsquared;
+            double userRMSESVD=0, moneSVD=0,OURuserRMSESVD=0,OURmoneSVD=0;
             int AScore = 0, BScore = 0;
-            int[,] nAnB = new int[4,4]; //0- pearson, 1- cosine, 2- random, 3- svd
+            int nA = 0, nB = 0;
+            
             int counter = 0;
             foreach(string user in testset.Keys)
             {
@@ -115,22 +117,69 @@ namespace Project
 
                     #region our_calc
                     OURpredictedRankSVD = ourModel.PredictRating(user, item);
-                    OURerror = testset[user][item]-predictedRankSVD;
+                    OURerror = testset[user][item]-OURpredictedRankSVD;
                     OURsquared = Math.Pow(error, 2);
-                    OURuserRMSESVD += squared;
-                    OURmoneSVD += squared;
+                    OURuserRMSESVD += OURsquared;
+                    OURmoneSVD += OURsquared;
                     #endregion
                 }
 
                 userRMSESVD /= testset[user].Count;
-                computeRewards(userRMSESVD, OURuserRMSESVD, out AScore, out BScore);
+                computeRewards(OURuserRMSESVD, userRMSESVD, out AScore, out BScore);
+                nA += AScore;
+                nB += BScore;
             }
             //update result:
             svdRMSE = Math.Sqrt(moneSVD / sizeOfTest);
+            ourRMSE = Math.Sqrt(OURmoneSVD / sizeOfTest);
             //update confidence:
-
-                dConfidence =  = signTest(AScore, BScore);
+            dConfidence = signTest(nA, nB);
         }
+
+        private void computeRewards(double ARMSE, double BRMSE, out int AScore, out int BScore)
+        {
+            if (ARMSE > BRMSE)
+            {
+                AScore = 0;
+                BScore = 1;
+            }
+            else if (ARMSE == BRMSE)
+            {
+                AScore = 0;
+                BScore = 0;
+            }
+            else
+            {
+                AScore = 1;
+                BScore = 0;
+            }
+        }
+        private double signTest(int nA, int nB)
+        {
+            double result = 0;
+            int n = nA + nB;
+            for (int i = nA; i <= n; i++)
+            {
+                result += binom(n, i);
+            }
+            double mult = Math.Pow(0.5, n);
+            result *= mult;
+            return 1 - result;
+        }
+
+        public double binom(int n, int k)
+        {
+            double answer = 0;
+            for (int i = k + 1; i <= n; i++)
+            {
+                answer += Math.Log(i, 2);
+            }
+            for (int j = 1; j <= n - k; j++)
+            {
+                answer -= Math.Log(j, 2);
+            }
+            answer = Math.Pow(2, answer);
+            return answer;
         }
     }
 }
