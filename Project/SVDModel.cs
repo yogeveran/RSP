@@ -27,6 +27,17 @@ namespace Project
             // TODO: Create Deep Copy Constructor.
             throw new NotImplementedException();
         }
+
+        public List<string> getDataUsers ()
+        {
+            return data.getUsers();
+        }
+
+        public Dictionary<string, int> getKRanksOfUser(string userID, int remainingRecordsForTest)
+        {
+            return data.getKRanksOfUser(userID, remainingRecordsForTest);
+        }
+
         public double PredictRating(string sUID, string sIID)
         {
             if (Bi.ContainsKey(sIID) && Bu.ContainsKey(sUID))

@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +14,7 @@ namespace Project
         public static string fileName = "";
         public static double trainSetSize = 0.95, SmallestDBSize = 0.1;
         private int sizeOfTest = 0;
+        private static int totalNumOfRanks = 0;
         
         List<SVDModel> list = new List<SVDModel>();
         private Dictionary<string, Dictionary<string, int>> testset = new Dictionary<string, Dictionary<string, int>>();
@@ -25,7 +28,10 @@ namespace Project
                 #region take_svd_avg_loop
                 DateTime regTime1 = DateTime.Now;
                 Runner regRun = new Runner();
-                regRun.Load(fileName, trainSetSize, 1.0);
+                if (i == 0)
+                    regRun.Load(fileName, trainSetSize, 1.0, true);
+                else
+                    regRun.Load(fileName, trainSetSize, 1.0, false);
                 SVDModel svd = regRun.RunAlgo(0, regRun.list.Count - 1);
                 TimeSpan span = DateTime.Now.Subtract(regTime1);
                 regularTrainList.Add(span);
@@ -41,7 +47,7 @@ namespace Project
                 #region take_algorithm_avg_loop
                 DateTime time = DateTime.Now;
                 runner = new Runner();
-                runner.Load(fileName, trainSetSize, SmallestDBSize);
+                runner.Load(fileName, trainSetSize, SmallestDBSize, false);
                 ourModel = runner.RunAlgo(0,runner.list.Count-1);
                 DateTime time2 = DateTime.Now;
                 fullyTrainedSVD = new SVDModel(ourModel);
@@ -72,8 +78,69 @@ namespace Project
 
         }
 
-        public void Load(string sFileName, double dTrainSetSize,double sizeOfSmallestSVDModel){
-            throw new NotImplementedException();
+        public void Load(string sFileName, double dTrainSetSize,double sizeOfSmallestSVDModel, bool isFirstTime){
+            string jsonLine = "";
+            StreamReader r = new StreamReader(sFileName);
+            jsonLine = r.ReadLine();
+            JObject record;
+            string user_id, business_id;
+            int rank, sizeOfCurrentTrain = 0, numOfModels = 1;
+            Data data = new Data();
+            int requestedDataSize = (int) (totalNumOfRanks * sizeOfSmallestSVDModel) + 1;
+            while (jsonLine != null)
+            {
+                record = JObject.Parse(jsonLine);
+                user_id = record["user_id"].ToString();
+                business_id = record["business_id"].ToString();
+                rank = int.Parse(record["stars"].ToString());
+                data.addToDic(user_id, business_id, rank);
+                if (isFirstTime)
+                    totalNumOfRanks++;
+                if (sizeOfSmallestSVDModel != 1.0)
+                {
+                    if (sizeOfCurrentTrain + 1 == requestedDataSize)
+                    {
+                        list.Add(new SVDModel(data));
+                        numOfModels++;
+                        data = new Data();
+                        sizeOfCurrentTrain = 0;
+                    }
+                    else
+                        sizeOfCurrentTrain++;
+                }
+                jsonLine = r.ReadLine(); 
+            }
+            list.Add(new SVDModel(data));
+            if (sizeOfSmallestSVDModel == 1.0)
+                loadToTestset(1 - dTrainSetSize, 0, 0);
+            else
+                loadToTestset(1 - dTrainSetSize, 0, numOfModels - 1);
+        }
+
+        private void loadToTestset(double testsetSize, int startIndexInList, int endIndexInList)
+        {
+            SVDModel currModel = list[0];
+            List<string> users = list[0].getDataUsers();
+            int index = 0;
+            int testNumOfRecords = (int)(totalNumOfRanks * testsetSize);
+            Random rnd = new Random();
+            Dictionary<string, int> moveToTest;
+            string currUser;
+            for (int i = startIndexInList; i <= endIndexInList && testNumOfRecords > 0; i++)
+            {
+                if (endIndexInList > 0)
+                {
+                    currModel = list[i];
+                    users = list[0].getDataUsers();
+                }
+                currUser = users[index]; 
+                moveToTest = currModel.getKRanksOfUser(currUser, testNumOfRecords);
+                if (moveToTest.Count > 0)
+                    testset[currUser] = moveToTest;
+                testNumOfRecords -= moveToTest.Count;
+                if (i == endIndexInList)
+                    index++;
+            }
         }
 
         public SVDModel RunAlgo(int from, int to)
