@@ -9,25 +9,42 @@ namespace Project
     class SVDModel
     {
         private Data data = null;
-        private double miu = double.NaN;
-        private Random rnd = new Random();
+        private double miu { get; set; }
+        private Random rnd;
         private Dictionary<string, double> Bi = null;
         private Dictionary<string, double> Bu = null;
 
         private Dictionary<string, Vector> Pu = null;
         private Dictionary<string, Vector> Qi = null;
-        private SVDModel model;
+        //private SVDModel model;
 
 
 
         public SVDModel(Data data){
             this.data = data;
+            miu = 0;
+            rnd = new Random();
         }
 
         public SVDModel(SVDModel model)
         {
-            // TODO: Create Deep Copy Constructor.
-            throw new NotImplementedException();
+            data = new Data(model.data);
+            rnd = new Random();
+            miu = model.miu;
+            Bu = new Dictionary<string, double>();
+            Bi = new Dictionary<string, double>();
+            Pu = new Dictionary<string, Vector>();
+            Qi = new Dictionary<string, Vector>();
+            foreach (string user in model.Bu.Keys)
+            {
+                Bu[user] = model.Bu[user];
+                Pu[user] = new Vector(model.Pu[user]);
+            }
+            foreach (string business in model.Bi.Keys)
+            {
+                Bi[business] = model.Bi[business];
+                Qi[business] = new Vector(model.Qi[business]);
+            }
         }
 
         public List<string> getDataUsers ()
@@ -95,11 +112,14 @@ namespace Project
             return this;
         }
 
-        public void trainBaseModel(int cFeatures){
-            Bi = new Dictionary<string, double>();
-            Bu = new Dictionary<string, double>();
-            Pu = new Dictionary<string, Vector>();
-            Qi = new Dictionary<string, Vector>();
+        public void trainBaseModel(int cFeatures, bool isNewModel){
+            if (isNewModel)
+            {
+                Bi = new Dictionary<string, double>();
+                Bu = new Dictionary<string, double>();
+                Pu = new Dictionary<string, Vector>();
+                Qi = new Dictionary<string, Vector>();
+            }
             Dictionary<string, Dictionary<string, int>> train = new Dictionary<string, Dictionary<string, int>>();
             Dictionary<string, Dictionary<string, int>> validation = new Dictionary<string, Dictionary<string, int>>();
             int requestedTrainSize = data.getNumOfRanks() / 2;
@@ -117,24 +137,28 @@ namespace Project
                     if (k != 0)
                     {
                         train[user] = new Dictionary<string, int>();
-                        Pu[user] = new Vector(cFeatures);
+                        if (isNewModel)
+                            Pu[user] = new Vector(cFeatures);
                     }
                     for (int j = 0; j < k; j++)
                     {
                         string item = businesses[j];
                         train[user][item] = data.getRank(user, item);
                         counter++;
-                        rand1 = rnd.Next(1, 1000);
-                        do
+                        if (isNewModel)
                         {
-                            rand2 = rnd.Next(1, 1000);
-                        } while (rand2 == rand1);
-                        Bi[item] = 1 / (rand1 - rand2);
-                        miu += train[user][item];
-                        if (!Qi.ContainsKey(item))
-                            Qi[item] = new Vector(cFeatures);
+                            rand1 = rnd.Next(1, 1000);
+                            do
+                            {
+                                rand2 = rnd.Next(1, 1000);
+                            } while (rand2 == rand1);
+                            Bi[item] = 1 / (rand1 - rand2);
+                            miu += train[user][item];
+                            if (!Qi.ContainsKey(item))
+                                Qi[item] = new Vector(cFeatures);
+                        }       
                     }
-                    if (k != 0)
+                    if (k != 0 && isNewModel)
                         Bu[user] = 1 / (rand2 - rand1);
                     if (k != businesses.Count)
                         validation[user] = new Dictionary<string, int>();
@@ -147,7 +171,8 @@ namespace Project
                 else
                     validation[user] = data.getUserBusinessesDic(user);
             }
-            miu /= counter;
+            if (isNewModel)
+                miu /= counter;
             double e, oldRMSE, newRMSE = double.MaxValue;
             double gamma = 0.01, lambda = 0.01;
             do
@@ -186,9 +211,8 @@ namespace Project
             if (other == null)
                 throw new ArgumentNullException();
             double res = Math.Abs(miu-other.miu);
-
-            foreach(string str in Qi.Keys)
-                res += Vector.dist(Qi[str],other.Qi[str]);
+            foreach (string str in Qi.Keys)
+                res += Vector.dist(Qi[str], other.Qi[str]);
             foreach (string str in Qi.Keys)
                 res += Vector.dist(Pu[str], other.Pu[str]);
             foreach (string str in Bi.Keys)

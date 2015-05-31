@@ -10,7 +10,7 @@ namespace Project
 {
     class Runner
     {
-        public static int cFeatures = 10, LOOP = 10;
+        public static int cFeatures = 10, LOOP = 1;
         public static string fileName = "N:\\לימודים\\סמסטר ו'\\מערכות המלצה\\Assignment 1\\bin\\Debug\\yelp_training_set_review.json";
         public static double trainSetSize = 0.95, SmallestDBSize = 0.1;
         private int sizeOfTest = 0;
@@ -23,7 +23,7 @@ namespace Project
         static void Main(string[] args)
         {
             List<TimeSpan> regularTrainList = new List<TimeSpan>();
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < LOOP; i++)
             {
                 #region take_svd_avg_loop
                 DateTime regTime1 = DateTime.Now;
@@ -52,7 +52,7 @@ namespace Project
                 DateTime time2 = DateTime.Now;
                 fullyTrainedSVD = new SVDModel(ourModel);
                 DateTime time3 = DateTime.Now; //Ignore Time of DeepCopyConstructor
-                fullyTrainedSVD.trainBaseModel(cFeatures);
+                fullyTrainedSVD.trainBaseModel(cFeatures, false);
                 DateTime time4 = DateTime.Now;
                 double sim = ourModel.similiarity(fullyTrainedSVD);
     
@@ -163,18 +163,27 @@ namespace Project
 
         public SVDModel RunAlgo(int from, int to)
         {
-            if ((from > to) || (to > list.Count-1))
+            if ((from < 0) || (to > list.Count-1))
                 throw new ArgumentException();
             if (to == from)
             {
-                list[from].trainBaseModel(cFeatures);
+                list[from].trainBaseModel(cFeatures, true);
                 return list[from];
             }
-            int pivot = from + (to - from) / 2;
+            int pivot;
+            if (to - from > 1)
+            {
+                if (((to-from+1)/2)% 2 == 1) //number of pairs
+                    pivot = (from + (to - from) / 2) + 1;
+                else
+                    pivot = from + (to - from) / 2;
+            }
+            else
+                pivot = from;
 
             SVDModel a=null,b=null;
             Task taskA = Task.Factory.StartNew(() => a = RunAlgo(from, pivot));
-            Task taskB = Task.Factory.StartNew(() => b = RunAlgo(pivot+1, pivot));
+            Task taskB = Task.Factory.StartNew(() => b = RunAlgo(pivot+1, to));
             taskA.Wait();
             taskB.Wait();
             return a.merge(b);

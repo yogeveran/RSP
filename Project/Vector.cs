@@ -8,7 +8,7 @@ namespace Project
     public class Vector
     {
         private double[] vector;
-        public static Random rnd = new Random();
+        public Random rnd = new Random();
 
         public Vector(int size)
         {
@@ -22,6 +22,15 @@ namespace Project
                     rand2 = rnd.Next(100, 800);
                 } while (rand1 == rand2);
                 vector[i] = 1 / (rand2-rand1);
+            }
+        }
+
+        public Vector (Vector toCopy)
+        {
+            vector = new double[toCopy.size()];
+            for (int i=0; i<vector.Length; i++)
+            {
+                vector[i] = toCopy.getIndex(i);
             }
         }
 

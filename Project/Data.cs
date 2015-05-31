@@ -18,6 +18,24 @@ namespace Project
             numOfRanks = 0;
         }
 
+        public Data (Data toCopy)
+        {
+            data = new Dictionary<string, Dictionary<string, int>>();
+            numOfRanks = 0;
+            List<string> usersToCopy = toCopy.getUsers();
+            List<string> userBusinesses;
+            foreach (string user in usersToCopy)
+            {
+                userBusinesses = toCopy.getUserBusinesses(user);
+                data[user] = new Dictionary<string, int>();
+                foreach (string business in userBusinesses)
+                {
+                    data[user][business] = toCopy.getRank(user, business);
+                    numOfRanks++;
+                }
+            }
+        }
+
         public Dictionary<string, int> getUserBusinessesDic(string userID)
         {
             return data[userID];
