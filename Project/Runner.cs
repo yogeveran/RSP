@@ -73,6 +73,7 @@ namespace Project
             Console.WriteLine("Average seconds time for full train is: " + fullTrainList.Average(x => x.Seconds));
             Console.WriteLine("Average seconds time for regular SVD train is: " + regularTrainList.Average(x => x.Seconds));
             Console.WriteLine("quickSVD is better than regular SVD with confidence: " + dConfidence);
+            Console.ReadLine();
         }
 
         public void Load(string sFileName, double dTrainSetSize,double sizeOfSmallestSVDModel, bool isFirstTime){
@@ -149,12 +150,15 @@ namespace Project
                     {
                         foreach(string record in moveToTest.Keys)
                         {
+                            if (testset[currUser].ContainsKey(record))
+                                Console.WriteLine("what");
                             testset[currUser].Add(record, moveToTest[record]);
                         }
                     }
                     else
                         testset[currUser] = moveToTest;
                     testNumOfRecords -= moveToTest.Count;
+                    sizeOfTest += moveToTest.Count;
                 }
                 if (endIndexInList == 0 || lastModel)
                     index++;

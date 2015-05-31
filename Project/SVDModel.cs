@@ -108,7 +108,7 @@ namespace Project
                     this.Pu[user] = other.Pu[user];
             }
             #endregion
-
+            data.merge(other.data);
             return this;
         }
 
@@ -137,7 +137,7 @@ namespace Project
                     if (k != 0)
                     {
                         train[user] = new Dictionary<string, int>();
-                        if (isNewModel)
+                        if (isNewModel || !Pu.ContainsKey(user))
                             Pu[user] = new Vector(cFeatures);
                     }
                     for (int j = 0; j < k; j++)
@@ -145,20 +145,19 @@ namespace Project
                         string item = businesses[j];
                         train[user][item] = data.getRank(user, item);
                         counter++;
-                        if (isNewModel)
+                        rand1 = rnd.Next(1, 1000);
+                        do
                         {
-                            rand1 = rnd.Next(1, 1000);
-                            do
-                            {
-                                rand2 = rnd.Next(1, 1000);
-                            } while (rand2 == rand1);
+                            rand2 = rnd.Next(1, 1000);
+                        } while (rand2 == rand1);
+                        if (!Bi.ContainsKey(item))
                             Bi[item] = 1 / (rand1 - rand2);
+                        if (isNewModel)
                             miu += train[user][item];
-                            if (!Qi.ContainsKey(item))
-                                Qi[item] = new Vector(cFeatures);
-                        }       
+                        if (!Qi.ContainsKey(item))
+                            Qi[item] = new Vector(cFeatures);
                     }
-                    if (k != 0 && isNewModel)
+                    if (k != 0 && (isNewModel || !Bu.ContainsKey(user)))
                         Bu[user] = 1 / (rand2 - rand1);
                     if (k != businesses.Count)
                         validation[user] = new Dictionary<string, int>();
@@ -213,11 +212,11 @@ namespace Project
             double res = Math.Abs(miu-other.miu);
             foreach (string str in Qi.Keys)
                 res += Vector.dist(Qi[str], other.Qi[str]);
-            foreach (string str in Qi.Keys)
+            foreach (string str in Pu.Keys)
                 res += Vector.dist(Pu[str], other.Pu[str]);
             foreach (string str in Bi.Keys)
                 res += Math.Abs(Bi[str] - other.Bi[str]);
-            foreach (string str in Bi.Keys)
+            foreach (string str in Bu.Keys)
                 res += Math.Abs(Bu[str] - other.Bu[str]);
             return res;
         }

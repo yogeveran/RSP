@@ -87,5 +87,28 @@ namespace Project
                 data.Remove(userID);
             return result;
         }
+
+        public void merge (Data toMerge)
+        {
+            foreach (string user in toMerge.data.Keys)
+            {
+                if (!data.ContainsKey(user))
+                {
+                    data[user] = toMerge.data[user];
+                    numOfRanks += toMerge.data[user].Count;
+                }
+                else
+                {
+                    foreach (string business in toMerge.data[user].Keys)
+                    {
+                        if (!data[user].ContainsKey(business))
+                        {
+                            data[user][business] = toMerge.data[user][business];
+                            numOfRanks++;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
