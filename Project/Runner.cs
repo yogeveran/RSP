@@ -121,24 +121,37 @@ namespace Project
         {
             SVDModel currModel = list[0];
             List<string> users = list[0].getDataUsers();
-            int index = 0;
+            int index = 0, modelIndex = 0;
             int testNumOfRecords = (int)(totalNumOfRanks * testsetSize);
             Random rnd = new Random();
             Dictionary<string, int> moveToTest;
             string currUser;
-            for (int i = startIndexInList; i <= endIndexInList && testNumOfRecords > 0; i++)
+            bool lastModel = false;
+            while (testNumOfRecords > 0)
             {
                 if (endIndexInList > 0)
                 {
-                    currModel = list[i];
-                    users = list[0].getDataUsers();
+                    currModel = list[modelIndex];
+                    users = currModel.getDataUsers();
+                    if (modelIndex < endIndexInList)
+                    {
+                        modelIndex++;
+                        lastModel = false;
+                    }
+                    else
+                    {
+                        modelIndex = startIndexInList;
+                        lastModel = true;
+                    }
                 }
                 currUser = users[index]; 
                 moveToTest = currModel.getKRanksOfUser(currUser, testNumOfRecords);
                 if (moveToTest.Count > 0)
+                {
                     testset[currUser] = moveToTest;
-                testNumOfRecords -= moveToTest.Count;
-                if (i == endIndexInList)
+                    testNumOfRecords -= moveToTest.Count;
+                }
+                if (endIndexInList == 0 || lastModel)
                     index++;
             }
         }
