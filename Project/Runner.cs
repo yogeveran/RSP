@@ -11,7 +11,7 @@ namespace Project
     class Runner
     {
         public static int cFeatures = 10, LOOP = 10;
-        public static string fileName = "";
+        public static string fileName = "N:\\לימודים\\סמסטר ו'\\מערכות המלצה\\Assignment 1\\bin\\Debug\\yelp_training_set_review.json";
         public static double trainSetSize = 0.95, SmallestDBSize = 0.1;
         private int sizeOfTest = 0;
         private static int totalNumOfRanks = 0;
@@ -23,7 +23,7 @@ namespace Project
         static void Main(string[] args)
         {
             List<TimeSpan> regularTrainList = new List<TimeSpan>();
-            for (int i = 0; i < LOOP; i++)
+            for (int i = 0; i < 1; i++)
             {
                 #region take_svd_avg_loop
                 DateTime regTime1 = DateTime.Now;
@@ -145,7 +145,15 @@ namespace Project
                 moveToTest = currModel.getKRanksOfUser(currUser, testNumOfRecords);
                 if (moveToTest.Count > 0)
                 {
-                    testset[currUser] = moveToTest;
+                    if (testset.ContainsKey(currUser))
+                    {
+                        foreach(string record in moveToTest.Keys)
+                        {
+                            testset[currUser].Add(record, moveToTest[record]);
+                        }
+                    }
+                    else
+                        testset[currUser] = moveToTest;
                     testNumOfRecords -= moveToTest.Count;
                 }
                 if (endIndexInList == 0 || lastModel)

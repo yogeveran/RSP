@@ -63,6 +63,7 @@ namespace Project
                 currItem = userRankedItems[i];
                 result[currItem] = data[userID][currItem];
                 data[userID].Remove(currItem);
+                numOfRanks--;
             }
             if (data[userID].Count == 0)
                 data.Remove(userID);
