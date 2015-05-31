@@ -10,13 +10,15 @@ namespace Project
     {
         private Data data = null;
         private double miu = double.NaN;
-
+        private Random rnd = new Random();
         private Dictionary<string, double> Bi = null;
         private Dictionary<string, double> Bu = null;
 
         private Dictionary<string, Vector> Pu = null;
         private Dictionary<string, Vector> Qi = null;
         private SVDModel model;
+
+
 
         public SVDModel(Data data){
             this.data = data;
@@ -94,7 +96,88 @@ namespace Project
         }
 
         public void trainBaseModel(int cFeatures){
-            throw new NotImplementedException();
+            Bi = new Dictionary<string, double>();
+            Bu = new Dictionary<string, double>();
+            Pu = new Dictionary<string, Vector>();
+            Qi = new Dictionary<string, Vector>();
+            Dictionary<string, Dictionary<string, int>> train = new Dictionary<string, Dictionary<string, int>>();
+            Dictionary<string, Dictionary<string, int>> validation = new Dictionary<string, Dictionary<string, int>>();
+            int requestedTrainSize = data.getNumOfRanks() / 2;
+            List<string> users = data.getUsers();
+            List<string> businesses;
+            int counter = 0, validationSize = 0;
+            for (int i = 0; i < users.Count; i++)
+            {
+                string user = users[i];
+                businesses = data.getUserBusinesses(user);
+                if (counter < requestedTrainSize)
+                {
+                    int rand1 = 1, rand2 = 1;
+                    int k = rnd.Next(0, businesses.Count + 1);
+                    if (k != 0)
+                    {
+                        train[user] = new Dictionary<string, int>();
+                        Pu[user] = new Vector(cFeatures);
+                    }
+                    for (int j = 0; j < k; j++)
+                    {
+                        string item = businesses[j];
+                        train[user][item] = data.getRank(user, item);
+                        counter++;
+                        rand1 = rnd.Next(1, 1000);
+                        do
+                        {
+                            rand2 = rnd.Next(1, 1000);
+                        } while (rand2 == rand1);
+                        Bi[item] = 1 / (rand1 - rand2);
+                        miu += train[user][item];
+                        if (!Qi.ContainsKey(item))
+                            Qi[item] = new Vector(cFeatures);
+                    }
+                    if (k != 0)
+                        Bu[user] = 1 / (rand2 - rand1);
+                    if (k != businesses.Count)
+                        validation[user] = new Dictionary<string, int>();
+                    for (int j = k; j < businesses.Count; j++)
+                    {
+                        validation[user][businesses[j]] = data.getRank(user, businesses[j]);
+                        validationSize++;
+                    }
+                }
+                else
+                    validation[user] = data.getUserBusinessesDic(user);
+            }
+            miu /= counter;
+            double e, oldRMSE, newRMSE = double.MaxValue;
+            double gamma = 0.01, lambda = 0.01;
+            do
+            {
+                foreach (string user in train.Keys)
+                {
+                    foreach (string item in train[user].Keys)
+                    {
+                        e = train[user][item] - miu - Bu[user] - Bi[item] - (Pu[user] * Qi[item]);
+                        Bu[user] += gamma * (e - lambda * Bu[user]);
+                        Bi[item] += gamma * (e - lambda * Bi[item]);
+                        Qi[item] = Qi[item] + ((Pu[user] * e - Qi[item] * lambda) * gamma);
+                        Pu[user] = Pu[user] + ((Qi[item] * e - Pu[user] * lambda) * gamma);
+                    }
+                }
+                double mone = 0, prediction;
+                foreach (string user in validation.Keys)
+                {
+                    foreach (string item in validation[user].Keys)
+                    {
+                        if (Bi.ContainsKey(item) && Bu.ContainsKey(user))
+                            prediction = miu + Bi[item] + Bu[user] + (Pu[user] * Qi[item]);
+                        else
+                            prediction = miu;
+                        mone += Math.Pow(prediction - validation[user][item], 2);
+                    }
+                }
+                oldRMSE = newRMSE;
+                newRMSE = mone;
+            } while (newRMSE < oldRMSE);
         }
 
 

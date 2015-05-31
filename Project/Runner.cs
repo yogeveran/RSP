@@ -73,9 +73,6 @@ namespace Project
             Console.WriteLine("Average seconds time for full train is: " + fullTrainList.Average(x => x.Seconds));
             Console.WriteLine("Average seconds time for regular SVD train is: " + regularTrainList.Average(x => x.Seconds));
             Console.WriteLine("quickSVD is better than regular SVD with confidence: " + dConfidence);
-
-
-
         }
 
         public void Load(string sFileName, double dTrainSetSize,double sizeOfSmallestSVDModel, bool isFirstTime){

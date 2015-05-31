@@ -18,10 +18,10 @@ namespace Project
             numOfRanks = 0;
         }
 
-        /*public Dictionary<string,Dictionary<string,int>> getDic()
+        public Dictionary<string, int> getUserBusinessesDic(string userID)
         {
-            return data;
-        }*/
+            return data[userID];
+        }
 
         public void addToDic(string userID, string businessID, int rank)
         {
@@ -41,20 +41,20 @@ namespace Project
             return data.Keys.ToList();
         }
 
-        /*public List<string> getUserBusinesses (string userID)
+        public List<string> getUserBusinesses(string userID)
         {
             return data[userID].Keys.ToList();
-        }*/
+        }
 
-        /*public int getRank (string userID, string businessID)
+        public int getRank(string userID, string businessID)
         {
             return data[userID][businessID];
-        }*/
+        }
 
-        public Dictionary<string,int> getKRanksOfUser (string userID, int remainingRecordsForTest)
+        public Dictionary<string, int> getKRanksOfUser(string userID, int remainingRecordsForTest)
         {
             Dictionary<string, int> result = new Dictionary<string, int>();
-            int k = rnd.Next(0, data[userID].Count+1);
+            int k = rnd.Next(0, data[userID].Count + 1);
             k = Math.Min(data[userID].Count - k, remainingRecordsForTest);
             List<string> userRankedItems = data[userID].Keys.ToList();
             string currItem;
