@@ -10,14 +10,13 @@ namespace Project
     {
         private Data data = null;
         private double miu { get; set; }
-        private Random rnd;
+        private Random rnd = null;
         private Dictionary<string, double> Bi = null;
         private Dictionary<string, double> Bu = null;
 
         private Dictionary<string, Vector> Pu = null;
         private Dictionary<string, Vector> Qi = null;
         //private SVDModel model;
-
 
 
         public SVDModel(Data data){

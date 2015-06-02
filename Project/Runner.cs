@@ -10,9 +10,11 @@ namespace Project
 {
     class Runner
     {
-        public static int cFeatures = 10, LOOP = 10;
-        public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\Assignment 1\yelp_training_set\yelp_training_set_review.json";
-        public static double trainSetSize = 0.95, SmallestDBSize = 0.1;
+        public static int cFeatures = 10, LOOP = 1;
+        public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\tmp\yelp_training_set_review.small2.json";
+        //public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\Assignment 1\yelp_training_set\yelp_training_set_review.json";
+        public static double trainSetSize = 0.95;//, SmallestDBSize = 0.01;
+        public static double[] SmallestDBSizeArray = {0.00036, 0.0078125,0.015625,0.03125, 0.0625, 0.1};
         private int sizeOfTest = 0;
         private static int totalNumOfRanks = 0;
         
@@ -22,59 +24,74 @@ namespace Project
 
         static void Main(string[] args)
         {
-            List<TimeSpan> regularTrainList = new List<TimeSpan>();
-            for (int i = 0; i < LOOP; i++)
-            {
-                #region take_svd_avg_loop
-                DateTime regTime1 = DateTime.Now;
-                Runner regRun = new Runner();
-                if (i == 0)
-                    regRun.Load(fileName, trainSetSize, 1.0, true);
-                else
-                    regRun.Load(fileName, trainSetSize, 1.0, false);
-                SVDModel svd = regRun.RunAlgo(0, regRun.list.Count - 1);
-                TimeSpan span = DateTime.Now.Subtract(regTime1);
-                regularTrainList.Add(span);
-                #endregion
-            }
-
-            List<TimeSpan> quickTrainList = new List<TimeSpan>();
-            List<TimeSpan> fullTrainList = new List<TimeSpan>();
-            Runner runner = null;
-            SVDModel quickModel = null, fullyTrainedSVD = null;
             
-            for (int i = 0; i < LOOP; i++) { 
-                #region take_algorithm_avg_loop
-                DateTime time = DateTime.Now;
-                runner = new Runner();
-                runner.Load(fileName, trainSetSize, SmallestDBSize, false);
-                quickModel = runner.RunAlgo(0,runner.list.Count-1);
-                DateTime time2 = DateTime.Now;
-                fullyTrainedSVD = new SVDModel(quickModel);
-                DateTime time3 = DateTime.Now; //Ignore Time of DeepCopyConstructor
-                fullyTrainedSVD.trainBaseModel(cFeatures, false);
-                DateTime time4 = DateTime.Now;
-                double sim = quickModel.similiarity(fullyTrainedSVD);
-    
-                TimeSpan quickTrain = time2.Subtract(time);
-                TimeSpan fullTrain = time4.Subtract(time).Subtract(time3.Subtract(time2));
+            List<TimeSpan> regularTrainList = new List<TimeSpan>();
+            for (int j = 0; j < SmallestDBSizeArray.Length; j++)
+            {
+                for (int i = 0; i < LOOP; i++)
+                {
+                    #region take_svd_avg_loop
+                    DateTime regTime1 = DateTime.Now;
+                    Runner regRun = new Runner();
+                    if (i == 0)
+                        regRun.Load(fileName, trainSetSize, 1.0, true);
+                    else
+                        regRun.Load(fileName, trainSetSize, 1.0, false);
+                    SVDModel svd = regRun.RunAlgo(0, regRun.list.Count - 1);
+                    TimeSpan span = DateTime.Now.Subtract(regTime1);
+                    regularTrainList.Add(span);
+                    #endregion
+                }
 
-                quickTrainList.Add(quickTrain);
-                fullTrainList.Add(fullTrain);
+                List<TimeSpan> quickTrainList = new List<TimeSpan>();
+                List<TimeSpan> fullTrainList = new List<TimeSpan>();
+                Runner runner = null;
+                SVDModel quickModel = null, fullyTrainedSVD = null;
+                bool print = true;
+                for (int i = 0; i < LOOP; i++)
+                {
+                    #region take_algorithm_avg_loop
+                    DateTime time = DateTime.Now;
+                    runner = new Runner();
+                    runner.Load(fileName, trainSetSize, SmallestDBSizeArray[j], false);
+                    if (runner.list.Count % 2 != 0)
+                    {
+                        Console.WriteLine("Not computing: for DB Size" + SmallestDBSizeArray[j] + " List needs to be even but is:" + runner.list.Count);
+                        print = false;
+                        break;
+                    }
+                    print = true;
+                    quickModel = runner.RunAlgo(0, runner.list.Count - 1);
+                    DateTime time2 = DateTime.Now;
+                    fullyTrainedSVD = new SVDModel(quickModel);
+                    DateTime time3 = DateTime.Now; //Ignore Time of DeepCopyConstructor
+                    fullyTrainedSVD.trainBaseModel(cFeatures, false);
+                    DateTime time4 = DateTime.Now;
+                    double sim = quickModel.similiarity(fullyTrainedSVD);
 
-                #endregion
+                    TimeSpan quickTrain = time2.Subtract(time);
+                    TimeSpan fullTrain = time4.Subtract(time).Subtract(time3.Subtract(time2));
+
+                    quickTrainList.Add(quickTrain);
+                    fullTrainList.Add(fullTrain);
+
+                    #endregion
+                }
+                if (!print)
+                    continue;
+                double dConfidence, ourRMSE, svdRMSE;
+                runner.Compute_RMSE_and_Confidence(quickModel, fullyTrainedSVD, out dConfidence, out ourRMSE, out svdRMSE);
+
+                Console.WriteLine("Distance from quickSVD to SVD: " + quickModel.similiarity(fullyTrainedSVD));
+                Console.WriteLine("Loops: " + LOOP + ", Smallest DB: " + SmallestDBSizeArray[j] + ", Amount of DBs:" + runner.list.Count);
+                Console.WriteLine("Average seconds time for quick train is: " + quickTrainList.Average(x => x.Seconds));
+                Console.WriteLine("Average seconds time for full train is: " + fullTrainList.Average(x => x.Seconds));
+                Console.WriteLine("Average seconds time for regular SVD train is: " + regularTrainList.Average(x => x.Seconds));
+                Console.WriteLine("Quick RMSE:" + ourRMSE + ", SVD RMSE:" + svdRMSE + ", Diff = " + (ourRMSE - svdRMSE));
+                Console.WriteLine("quickSVD is better than regular SVD with confidence: " + dConfidence);
+                Console.WriteLine("===================");
+
             }
-            double dConfidence,ourRMSE,svdRMSE;
-            runner.Compute_RMSE_and_Confidence(quickModel, fullyTrainedSVD, out dConfidence, out ourRMSE, out svdRMSE);
-
-            Console.WriteLine("Distance from quickSVD to SVD: " + quickModel.similiarity(fullyTrainedSVD));
-
-            Console.WriteLine("For " + LOOP + " loops:");
-            Console.WriteLine("Average seconds time for quick train is: " + quickTrainList.Average(x => x.Seconds));
-            Console.WriteLine("Average seconds time for full train is: " + fullTrainList.Average(x => x.Seconds));
-            Console.WriteLine("Average seconds time for regular SVD train is: " + regularTrainList.Average(x => x.Seconds));
-            Console.WriteLine("Quick RMSE:" + ourRMSE+", SVD RMSE:"+svdRMSE+", Diff = " + (ourRMSE-svdRMSE));
-            Console.WriteLine("quickSVD is better than regular SVD with confidence: " + dConfidence);
             Console.ReadLine();
         }
         static void checkSignTest(string[] args) {
@@ -122,7 +139,7 @@ namespace Project
             if (sizeOfSmallestSVDModel == 1.0)
                 loadToTestset(1 - dTrainSetSize, 0, 0);
             else
-                loadToTestset(1 - dTrainSetSize, 0, numOfModels - 1);
+                loadToTestset(dTrainSetSize * (1.0 - dTrainSetSize), 0, numOfModels - 1);
         }
 
         private void loadToTestset(double testsetSize, int startIndexInList, int endIndexInList)
@@ -130,7 +147,7 @@ namespace Project
             SVDModel currModel = list[0];
             List<string> users = list[0].getDataUsers();
             int index = 0, modelIndex = 0;
-            int testNumOfRecords = (int)(totalNumOfRanks * testsetSize);
+            int testNumOfRecords = (int)Math.Floor(totalNumOfRanks * testsetSize);
             Random rnd = new Random();
             Dictionary<string, int> moveToTest;
             string currUser;
@@ -152,7 +169,7 @@ namespace Project
                         lastModel = true;
                     }
                 }
-                currUser = users[index]; 
+                currUser = users[index]; //TODO: FIX ERROR HERE <-----------------------------------------------------------------
                 moveToTest = currModel.getKRanksOfUser(currUser, testNumOfRecords);
                 if (moveToTest.Count > 0)
                 {
@@ -161,8 +178,8 @@ namespace Project
                         foreach(string record in moveToTest.Keys)
                         {
                             if (testset[currUser].ContainsKey(record))
-                                Console.WriteLine("what");
-                            testset[currUser].Add(record, moveToTest[record]);
+                                Console.WriteLine("Records with same user,item exist in DB, ignored...");
+                            testset[currUser][record] = moveToTest[record];
                         }
                     }
                     else
@@ -177,7 +194,7 @@ namespace Project
 
         public SVDModel RunAlgo(int from, int to)
         {
-            if ((from < 0) || (to > list.Count-1))
+            if ((from < 0) || (from >= list.Count) || ((to > list.Count - 1) && (from != to)))
                 throw new ArgumentException();
             if (to == from)
             {
@@ -209,7 +226,6 @@ namespace Project
             double userRMSESVD=0, moneSVD=0,OURuserRMSESVD=0,OURmoneSVD=0;
             int AScore = 0, BScore = 0;
             int nA = 0, nB = 0;
-            int nAA = 0, nBB = 0;
             int counter = 0;
             foreach(string user in testset.Keys)
             {
@@ -323,7 +339,7 @@ namespace Project
                 result /= 2;
                 sum -= 1;
             }
-            //result = Math.Max(0, Math.Min(1, result));
+            result = Math.Max(0, Math.Min(1, result));
 
             return 1.0 - result;
         }
@@ -378,6 +394,21 @@ namespace Project
         private static double log2(double num)
         {
             return Math.Log(num, 2);
+        }
+
+        public static double TruncateDouble(double value, int decimalPlaces)
+        {
+            double integralValue = Math.Truncate(value);
+
+            double fraction = value - integralValue;
+
+            double factor = (double)Math.Pow(10, decimalPlaces);
+
+            double truncatedFraction = Math.Truncate(fraction * factor) / factor;
+
+            double result = integralValue + truncatedFraction;
+
+            return result;
         }
     
     }
