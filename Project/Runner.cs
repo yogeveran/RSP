@@ -5,12 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Diagnostics;
 namespace Project
 {
     class Runner
     {
-        public static int cFeatures = 10, LOOP = 1;
+        public static int cFeatures = 10, LOOP = 10;
         public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\Assignment 1\yelp_training_set\yelp_training_set_review.json";
         public static double trainSetSize = 0.95, SmallestDBSize = 0.1;
         private int sizeOfTest = 0;
@@ -69,6 +69,7 @@ namespace Project
 
             Console.WriteLine("Distance from quickSVD to SVD: " + quickModel.similiarity(fullyTrainedSVD));
 
+            Console.WriteLine("For " + LOOP + " loops:");
             Console.WriteLine("Average seconds time for quick train is: " + quickTrainList.Average(x => x.Seconds));
             Console.WriteLine("Average seconds time for full train is: " + fullTrainList.Average(x => x.Seconds));
             Console.WriteLine("Average seconds time for regular SVD train is: " + regularTrainList.Average(x => x.Seconds));
@@ -76,7 +77,15 @@ namespace Project
             Console.WriteLine("quickSVD is better than regular SVD with confidence: " + dConfidence);
             Console.ReadLine();
         }
-
+        static void checkSignTest(string[] args) {
+            for (int nA = 7, nB = 13; nA < 1990000; nA *= 4, nB *= 2)
+            {
+                double one = AbetterThanB(nA, nB);
+                double two = signTest(nA, nB);
+                Console.WriteLine("nA:"+nA+", nB "+nB+", one: " + one + ", two: " + two+", diff: "+Math.Abs(one-two));
+            }
+            Console.ReadKey();
+        }
         public void Load(string sFileName, double dTrainSetSize,double sizeOfSmallestSVDModel, bool isFirstTime){
             string jsonLine = "";
             StreamReader r = new StreamReader(sFileName);
@@ -200,7 +209,7 @@ namespace Project
             double userRMSESVD=0, moneSVD=0,OURuserRMSESVD=0,OURmoneSVD=0;
             int AScore = 0, BScore = 0;
             int nA = 0, nB = 0;
-            
+            int nAA = 0, nBB = 0;
             int counter = 0;
             foreach(string user in testset.Keys)
             {
@@ -225,6 +234,8 @@ namespace Project
                 }
 
                 userRMSESVD /= testset[user].Count;
+                OURuserRMSESVD /= testset[user].Count;
+
                 computeRewards(OURuserRMSESVD, userRMSESVD, out AScore, out BScore);
                 nA += AScore;
                 nB += BScore;
@@ -233,7 +244,7 @@ namespace Project
             svdRMSE = Math.Sqrt(moneSVD / sizeOfTest);
             ourRMSE = Math.Sqrt(OURmoneSVD / sizeOfTest);
             //update confidence:
-            dConfidence = signTest(nA, nB);
+            dConfidence = AbetterThanB(nA, nB);//signTest(nA, nB);
         }
 
         private void computeRewards(double ARMSE, double BRMSE, out int AScore, out int BScore)
@@ -254,7 +265,7 @@ namespace Project
                 BScore = 0;
             }
         }
-        private double signTest(int nA, int nB)
+        private static double signTest(int nA, int nB)
         {
             double result = 0;
             int n = nA + nB;
@@ -267,7 +278,7 @@ namespace Project
             return 1 - result;
         }
 
-        public double binom(int n, int k)
+        public static double binom(int n, int k)
         {
             double answer = 0;
             for (int i = k + 1; i <= n; i++)
@@ -281,5 +292,93 @@ namespace Project
             answer = Math.Pow(2, answer);
             return answer;
         }
+
+
+        private static double AbetterThanB(double nA, double nB)
+        {
+            double nom = logFactorial(nA + nB);
+            double sum = nA + nB;
+
+            double result = 0.0;
+            for (double i = nA; i < nA + nB; i += 1)
+            {
+                double denom = logFactorial(i) + logFactorial(nA + nB - i);
+                double tmp = nom - denom;
+                tmp -= nA + nB - sum;
+
+                if (tmp > 1 && tmp < sum)
+                {//If tmp is too large then reduce him as much as possible.
+                    while ((tmp > 1) && (sum > 0))
+                    {
+                        tmp -= 1;
+                        sum -= 1;
+                        result /= 2;
+                    }
+                }
+                result += Math.Pow(2, tmp);
+            }
+            //divide by remaining 2.
+            while (sum > 0)
+            {
+                result /= 2;
+                sum -= 1;
+            }
+            //result = Math.Max(0, Math.Min(1, result));
+
+            return 1.0 - result;
+        }
+
+        /*{
+        double sum = (nA + nB);
+        double lognom = 0;
+        double counter = 0;
+        double remaining = nA + nB;
+        if (Math.Abs(nA - nB) < 100)
+            Console.Write("");
+
+        for (double i = 1; i <= sum; i+=1)
+            lognom += Math.Log(i,2);
+
+        for (double i = nA; i <= sum; i += 1)
+        {
+                
+            double logdenom_i = 0;
+            double logdenom_sum_minus_i = 0;
+            for (double j = 1; j <= i; j += 1)
+                logdenom_i += Math.Log(j, 2);
+            for (double j = 1; j <= (sum-i); j += 1)
+                logdenom_sum_minus_i += Math.Log(j, 2);
+
+            counter += lognom - (logdenom_i + logdenom_sum_minus_i);//TODO Problematic line
+        }
+        while (remaining > 0) {
+            counter /= 2;
+            remaining--;
+        }
+        return 1-counter;
+                
+    }*/
+
+        private static double sum(double from, double to, Func<double, double> mthd)
+        {
+            double sum = 0.0;
+            while (from <= to)
+            {
+                sum += mthd(from);
+                from += 1;
+            }
+            return sum;
+        }
+
+        private static double logFactorial(double n)
+        {
+            return sum(1, n, log2);
+        }
+
+        private static double log2(double num)
+        {
+            return Math.Log(num, 2);
+        }
+    
     }
 }
