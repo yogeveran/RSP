@@ -11,7 +11,7 @@ namespace Project
     class Runner
     {
         public static int cFeatures = 10, LOOP = 1;
-        public static string fileName = "N:\\לימודים\\סמסטר ו'\\מערכות המלצה\\Assignment 1\\bin\\Debug\\yelp_training_set_review.json";
+        public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\Assignment 1\yelp_training_set\yelp_training_set_review.json";
         public static double trainSetSize = 0.95, SmallestDBSize = 0.1;
         private int sizeOfTest = 0;
         private static int totalNumOfRanks = 0;
@@ -41,20 +41,20 @@ namespace Project
             List<TimeSpan> quickTrainList = new List<TimeSpan>();
             List<TimeSpan> fullTrainList = new List<TimeSpan>();
             Runner runner = null;
-            SVDModel ourModel = null, fullyTrainedSVD = null;
+            SVDModel quickModel = null, fullyTrainedSVD = null;
             
             for (int i = 0; i < LOOP; i++) { 
                 #region take_algorithm_avg_loop
                 DateTime time = DateTime.Now;
                 runner = new Runner();
                 runner.Load(fileName, trainSetSize, SmallestDBSize, false);
-                ourModel = runner.RunAlgo(0,runner.list.Count-1);
+                quickModel = runner.RunAlgo(0,runner.list.Count-1);
                 DateTime time2 = DateTime.Now;
-                fullyTrainedSVD = new SVDModel(ourModel);
+                fullyTrainedSVD = new SVDModel(quickModel);
                 DateTime time3 = DateTime.Now; //Ignore Time of DeepCopyConstructor
                 fullyTrainedSVD.trainBaseModel(cFeatures, false);
                 DateTime time4 = DateTime.Now;
-                double sim = ourModel.similiarity(fullyTrainedSVD);
+                double sim = quickModel.similiarity(fullyTrainedSVD);
     
                 TimeSpan quickTrain = time2.Subtract(time);
                 TimeSpan fullTrain = time4.Subtract(time).Subtract(time3.Subtract(time2));
@@ -65,13 +65,14 @@ namespace Project
                 #endregion
             }
             double dConfidence,ourRMSE,svdRMSE;
-            runner.Compute_RMSE_and_Confidence(ourModel, fullyTrainedSVD, out dConfidence, out ourRMSE, out svdRMSE);
+            runner.Compute_RMSE_and_Confidence(quickModel, fullyTrainedSVD, out dConfidence, out ourRMSE, out svdRMSE);
 
-            Console.WriteLine("Distance from quickSVD to SVD: " + ourModel.similiarity(fullyTrainedSVD));
+            Console.WriteLine("Distance from quickSVD to SVD: " + quickModel.similiarity(fullyTrainedSVD));
 
             Console.WriteLine("Average seconds time for quick train is: " + quickTrainList.Average(x => x.Seconds));
             Console.WriteLine("Average seconds time for full train is: " + fullTrainList.Average(x => x.Seconds));
             Console.WriteLine("Average seconds time for regular SVD train is: " + regularTrainList.Average(x => x.Seconds));
+            Console.WriteLine("Quick RMSE:" + ourRMSE+", SVD RMSE:"+svdRMSE+", Diff = " + (ourRMSE-svdRMSE));
             Console.WriteLine("quickSVD is better than regular SVD with confidence: " + dConfidence);
             Console.ReadLine();
         }
@@ -193,7 +194,7 @@ namespace Project
             return a.merge(b);
         }
 
-        public void Compute_RMSE_and_Confidence(SVDModel ourModel, SVDModel SVD, out double dConfidence, out double ourRMSE, out double svdRMSE)
+        public void Compute_RMSE_and_Confidence(SVDModel quickModel, SVDModel SVD, out double dConfidence, out double ourRMSE, out double svdRMSE)
         {
             double predictedRankSVD, error, squared,OURpredictedRankSVD,OURerror,OURsquared;
             double userRMSESVD=0, moneSVD=0,OURuserRMSESVD=0,OURmoneSVD=0;
@@ -215,9 +216,9 @@ namespace Project
                     #endregion
 
                     #region our_calc
-                    OURpredictedRankSVD = ourModel.PredictRating(user, item);
+                    OURpredictedRankSVD = quickModel.PredictRating(user, item);
                     OURerror = testset[user][item]-OURpredictedRankSVD;
-                    OURsquared = Math.Pow(error, 2);
+                    OURsquared = Math.Pow(OURerror, 2);
                     OURuserRMSESVD += OURsquared;
                     OURmoneSVD += OURsquared;
                     #endregion
