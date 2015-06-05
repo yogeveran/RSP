@@ -10,9 +10,9 @@ namespace Project
 {
     class Runner
     {
-        public static int cFeatures = 10, LOOP = 1;
-        public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\tmp\yelp_training_set_review.small2.json";
-        //public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\Assignment 1\yelp_training_set\yelp_training_set_review.json";
+        public static int cFeatures = 10, LOOP = 10;
+        //public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\tmp\yelp_training_set_review.small1.json";
+        public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\Assignment 1\yelp_training_set\yelp_training_set_review.json";
         public static double trainSetSize = 0.95;//, SmallestDBSize = 0.01;
         public static double[] SmallestDBSizeArray = {0.00036, 0.0078125,0.015625,0.03125, 0.0625, 0.1};
         private int sizeOfTest = 0;
@@ -169,7 +169,7 @@ namespace Project
                         lastModel = true;
                     }
                 }
-                currUser = users[index]; //TODO: FIX ERROR HERE <-----------------------------------------------------------------
+                currUser = users[index%users.Count];
                 moveToTest = currModel.getKRanksOfUser(currUser, testNumOfRecords);
                 if (moveToTest.Count > 0)
                 {
@@ -324,12 +324,10 @@ namespace Project
 
                 if (tmp > 1 && tmp < sum)
                 {//If tmp is too large then reduce him as much as possible.
-                    while ((tmp > 1) && (sum > 0))
-                    {
-                        tmp -= 1;
-                        sum -= 1;
-                        result /= 2;
-                    }
+                    int dec = (int)Math.Min(Math.Max(Math.Floor(tmp - 1.0),0),Math.Max(Math.Floor(sum),0));
+                    tmp-=dec;
+                    sum-=dec;
+                    result*= Math.Pow(0.5,dec);
                 }
                 result += Math.Pow(2, tmp);
             }
