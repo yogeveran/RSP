@@ -10,16 +10,18 @@ namespace Project
 {
     class Runner
     {
-        public static int cFeatures = 10, LOOP = 10;
+        public static int cFeatures = 10, LOOP = 3;
         //public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\tmp\yelp_training_set_review.small1.json";
-        public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\Assignment 1\yelp_training_set\yelp_training_set_review.json";
+        //public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\Assignment 1\yelp_training_set\yelp_training_set_review.json";
+        public static string fileName = @"C:\Users\eranyogev\PycharmProjects\csvToJson\ratings.json";
         public static double trainSetSize = 0.95;//, SmallestDBSize = 0.01;
         public static double[] SmallestDBSizeArray = {0.00036, 0.0078125,0.015625,0.03125, 0.0625, 0.1};
         private int sizeOfTest = 0;
         private static int totalNumOfRanks = 0;
         
         List<SVDModel> list = new List<SVDModel>();
-        private Dictionary<string, Dictionary<string, int>> testset = new Dictionary<string, Dictionary<string, int>>();
+        private Dictionary<string, Dictionary<string, double>> testset = new Dictionary<string, Dictionary<string, double>>();
+        private Dictionary<string, Dictionary<string, double>> trainset = new Dictionary<string, Dictionary<string, double>>();
 
 
         static void Main(string[] args)
@@ -109,15 +111,25 @@ namespace Project
             jsonLine = r.ReadLine();
             JObject record;
             string user_id, business_id;
-            int rank, sizeOfCurrentTrain = 0, numOfModels = 1;
+            double rank;
+            int sizeOfCurrentTrain = 0, numOfModels = 1;
             Data data = new Data();
             int requestedDataSize = (int) (totalNumOfRanks * sizeOfSmallestSVDModel) + 1;
             while (jsonLine != null)
             {
+                jsonLine = jsonLine.Substring(1, jsonLine.Length - 2);//only for Version 2
                 record = JObject.Parse(jsonLine);
+                /*
+                //Version 1 
                 user_id = record["user_id"].ToString();
                 business_id = record["business_id"].ToString();
-                rank = int.Parse(record["stars"].ToString());
+                rank = int.Parse(record["stars"].ToString());*/
+                
+                //Version 2
+                user_id = record["userId"].ToString();
+                business_id = record["movieId"].ToString();
+                rank = double.Parse(record["rating"].ToString());
+
                 data.addToDic(user_id, business_id, rank);
                 if (isFirstTime)
                     totalNumOfRanks++;
@@ -149,7 +161,7 @@ namespace Project
             int index = 0, modelIndex = 0;
             int testNumOfRecords = (int)Math.Floor(totalNumOfRanks * testsetSize);
             Random rnd = new Random();
-            Dictionary<string, int> moveToTest;
+            Dictionary<string, double> moveToTest;
             string currUser;
             bool lastModel = false;
             while (testNumOfRecords > 0)

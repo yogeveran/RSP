@@ -8,26 +8,26 @@ namespace Project
 {
     public class Data
     {
-        private Dictionary<string, Dictionary<string, int>> data;
+        private Dictionary<string, Dictionary<string, double>> data;
         private int numOfRanks;
         private Random rnd = new Random();
 
         public Data()
         {
-            data = new Dictionary<string, Dictionary<string, int>>();
+            data = new Dictionary<string, Dictionary<string, double>>();
             numOfRanks = 0;
         }
 
         public Data (Data toCopy)
         {
-            data = new Dictionary<string, Dictionary<string, int>>();
+            data = new Dictionary<string, Dictionary<string, double>>();
             numOfRanks = 0;
             List<string> usersToCopy = toCopy.getUsers();
             List<string> userBusinesses;
             foreach (string user in usersToCopy)
             {
                 userBusinesses = toCopy.getUserBusinesses(user);
-                data[user] = new Dictionary<string, int>();
+                data[user] = new Dictionary<string, double>();
                 foreach (string business in userBusinesses)
                 {
                     data[user][business] = toCopy.getRank(user, business);
@@ -36,15 +36,15 @@ namespace Project
             }
         }
 
-        public Dictionary<string, int> getUserBusinessesDic(string userID)
+        public Dictionary<string, double> getUserBusinessesDic(string userID)
         {
             return data[userID];
         }
 
-        public void addToDic(string userID, string businessID, int rank)
+        public void addToDic(string userID, string businessID, double rank)
         {
             if (!data.ContainsKey(userID))
-                data[userID] = new Dictionary<string, int>();
+                data[userID] = new Dictionary<string, double>();
             data[userID][businessID] = rank;
             numOfRanks++;
         }
@@ -64,14 +64,14 @@ namespace Project
             return data[userID].Keys.ToList();
         }
 
-        public int getRank(string userID, string businessID)
+        public double getRank(string userID, string businessID)
         {
             return data[userID][businessID];
         }
 
-        public Dictionary<string, int> getKRanksOfUser(string userID, int remainingRecordsForTest)
+        public Dictionary<string, double> getKRanksOfUser(string userID, int remainingRecordsForTest)
         {
-            Dictionary<string, int> result = new Dictionary<string, int>();
+            Dictionary<string, double> result = new Dictionary<string, double>();
             int k = rnd.Next(0, data[userID].Count + 1);
             k = Math.Min(data[userID].Count - k, remainingRecordsForTest);
             List<string> userRankedItems = data[userID].Keys.ToList();

@@ -51,7 +51,7 @@ namespace Project
             return data.getUsers();
         }
 
-        public Dictionary<string, int> getKRanksOfUser(string userID, int remainingRecordsForTest)
+        public Dictionary<string, double> getKRanksOfUser(string userID, int remainingRecordsForTest)
         {
             return data.getKRanksOfUser(userID, remainingRecordsForTest);
         }
@@ -119,8 +119,8 @@ namespace Project
                 Pu = new Dictionary<string, Vector>();
                 Qi = new Dictionary<string, Vector>();
             }
-            Dictionary<string, Dictionary<string, int>> train = new Dictionary<string, Dictionary<string, int>>();
-            Dictionary<string, Dictionary<string, int>> validation = new Dictionary<string, Dictionary<string, int>>();
+            Dictionary<string, Dictionary<string, double>> train = new Dictionary<string, Dictionary<string, double>>();
+            Dictionary<string, Dictionary<string, double>> validation = new Dictionary<string, Dictionary<string, double>>();
             int requestedTrainSize = data.getNumOfRanks() / 2;
             List<string> users = data.getUsers();
             List<string> businesses;
@@ -135,7 +135,7 @@ namespace Project
                     int k = rnd.Next(0, businesses.Count + 1);
                     if (k != 0)
                     {
-                        train[user] = new Dictionary<string, int>();
+                        train[user] = new Dictionary<string, double>();
                         if (isNewModel || !Pu.ContainsKey(user))
                             Pu[user] = new Vector(cFeatures);
                     }
@@ -159,7 +159,7 @@ namespace Project
                     if (k != 0 && (isNewModel || !Bu.ContainsKey(user)))
                         Bu[user] = 1 / (rand2 - rand1);
                     if (k != businesses.Count)
-                        validation[user] = new Dictionary<string, int>();
+                        validation[user] = new Dictionary<string, double>();
                     for (int j = k; j < businesses.Count; j++)
                     {
                         validation[user][businesses[j]] = data.getRank(user, businesses[j]);
