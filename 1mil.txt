@@ -1,4 +1,5 @@
-Not computing: for DB Size0.00036 List needs to be even but is:2771
+Not computing: for DB Size 0.00036 List needs to be even but is:2771
+
 Distance from quickSVD to SVD: 1815.98493161304
 Loops: 3, Smallest DB: 0.0078125, Amount of DBs:64
 Average seconds time for quick train is: 40.6666666666667

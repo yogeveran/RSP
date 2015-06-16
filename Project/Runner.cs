@@ -10,6 +10,7 @@ namespace Project
 {
     class Runner
     {
+        public static bool versionTwo = false;
         public static int cFeatures = 10, LOOP = 3;
         //public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\tmp\yelp_training_set_review.small1.json";
         //public static string fileName = @"C:\Users\eranyogev\Documents\לימודים\סמסר ח\Recommendation Systems\Assignment 1\yelp_training_set\yelp_training_set_review.json";
@@ -58,7 +59,7 @@ namespace Project
                     runner.Load(fileName, trainSetSize, SmallestDBSizeArray[j], false);
                     if (runner.list.Count % 2 != 0)
                     {
-                        Console.WriteLine("Not computing: for DB Size" + SmallestDBSizeArray[j] + " List needs to be even but is:" + runner.list.Count);
+                        Console.WriteLine("Not computing: for DB Size " + SmallestDBSizeArray[j] + " List needs to be even but is:" + runner.list.Count);
                         print = false;
                         break;
                     }
@@ -105,6 +106,9 @@ namespace Project
             }
             Console.ReadKey();
         }
+
+
+
         public void Load(string sFileName, double dTrainSetSize,double sizeOfSmallestSVDModel, bool isFirstTime){
             string jsonLine = "";
             StreamReader r = new StreamReader(sFileName);
@@ -117,18 +121,23 @@ namespace Project
             int requestedDataSize = (int) (totalNumOfRanks * sizeOfSmallestSVDModel) + 1;
             while (jsonLine != null)
             {
-                jsonLine = jsonLine.Substring(1, jsonLine.Length - 2);//only for Version 2
+                if (versionTwo)
+                    jsonLine = jsonLine.Substring(1, jsonLine.Length - 2);//only for Version 2
                 record = JObject.Parse(jsonLine);
-                /*
-                //Version 1 
-                user_id = record["user_id"].ToString();
-                business_id = record["business_id"].ToString();
-                rank = int.Parse(record["stars"].ToString());*/
-                
-                //Version 2
-                user_id = record["userId"].ToString();
-                business_id = record["movieId"].ToString();
-                rank = double.Parse(record["rating"].ToString());
+
+                if (versionTwo)
+                {
+                    user_id = record["userId"].ToString();
+                    business_id = record["movieId"].ToString();
+                    rank = double.Parse(record["rating"].ToString());
+                }
+                else
+                {
+                    user_id = record["user_id"].ToString();
+                    business_id = record["business_id"].ToString();
+                    rank = int.Parse(record["stars"].ToString());
+                }
+               
 
                 data.addToDic(user_id, business_id, rank);
                 if (isFirstTime)
